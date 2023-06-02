@@ -1,6 +1,8 @@
 from django.shortcuts import render, redirect, HttpResponse
-from django.contrib.auth import authenticate, login as auth_login, logout
-from accounts.forms import LoginForm
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from accounts.forms import LoginForm, SignUpForm
+from django.db import IntegrityError
 
 
 # Create your views here.
@@ -20,7 +22,7 @@ def user_login(request):
                 password=password,
             )
             if user is not None:
-                auth_login(request, user)
+                login(request, user)
                 return redirect("home")
     else:
         form = LoginForm()
@@ -31,3 +33,31 @@ def user_login(request):
 def user_logout(request):
     logout(request)
     return redirect("login")
+
+
+def user_signup(request):
+    if request.method == "POST":
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            password_confirmation = form.cleaned_data['password_confirmation']
+            if password == password_confirmation:
+                existing_user = User.objects.filter(username=username).exists()
+                if existing_user:
+                    raise IntegrityError("IntegrityError: This username is already taken")
+                else:
+                    user = User.objects.create_user(
+                        username,
+                        password=password,
+                    )
+                    login(request, user)
+                    return redirect("home")
+            else:
+                form.add_error("password", "The passwords do not match")
+    else:
+        form = SignUpForm()
+    context = {
+        "form": form,
+    }
+    return render(request, "accounts/signup.html", context)
