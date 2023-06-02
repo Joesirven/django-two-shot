@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from accounts.forms import LoginForm, SignUpForm
 from django.db import IntegrityError
 
-
 # Create your views here.
 
 
