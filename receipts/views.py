@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from receipts.models import Receipt, ExpenseCategory, Account
-from receipts.forms import ReceiptForm
+from receipts.forms import ReceiptForm, ExpenseCategoryForm, AccountForm
 from django.contrib.auth.decorators import login_required
 
 
@@ -46,3 +46,55 @@ def account_list(request):
         "accounts": accounts,
     }
     return render(request, "receipts/account_list.html", context)
+
+
+@login_required
+def create_category(request):
+    if request.method == "POST":
+        form = ExpenseCategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save(commit=False)
+            category.owner = request.user
+            category.save()
+            return redirect("receipts:category_list")
+    else:
+        form = ExpenseCategoryForm()
+
+    context = {
+        "form": form,
+    }
+    return render(request, "categories/create_category.html", context)
+
+@login_required
+def create_account(request):
+    if request.method == "POST":
+        form = AccountForm(request.POST)
+        if form.is_valid():
+            account = form.save(False)
+            account.owner = request.user
+            account.save()
+            return redirect("account_list")
+    else:
+        form = ExpenseCategoryForm()
+    context = {
+        "form": form,
+    }
+    return render(request, "accounts/account_create.html", context)
+
+
+@login_required
+def category_list(request):
+    categories = ExpenseCategory.objects.filter(owner=request.user)
+    context = {
+        "categories": categories,
+    }
+    return render(request, "categories/account_list.html", context)
+
+
+@login_required
+def account_list(request):
+    accounts = Account.objects.filter(owner=request.user)
+    context = {
+        "accounts": accounts,
+    }
+    return render(request, "accounts/list.html", context)
